@@ -104,32 +104,41 @@ def download_book(url, metaDict):
 
 #Variables text mixed material
 CLEAN = "clean"
-testBook = "/islandora/object/niu-twain%3A10949"
-savePath = "database/books/"
-baseUrl = "http://twain.lib.niu.edu"	#Base url used along with book url	
-urlMatch = "*/islandora/object/*"		#Links matching this are texts
-queries = ["text", "mixed%20material"]	#Queries to use in urls to download text
+DB_NAME = "db.json"
+ROOT_DB_NAME = "Mark_Twain_Database/"
+APP_DATA_DIR = os.environ['LOCALAPPDATA'].replace('\\', '/') + "/"
+ROOT_DB_DIR = APP_DATA_DIR + ROOT_DB_NAME
+SAVE_BOOKS_DIR = ROOT_DB_DIR + "books/"
+DB_PATH = ROOT_DB_DIR + DB_NAME
+
+BASE_URL = "http://twain.lib.niu.edu"	#Base url used along with book url	
+URL_MATCH = "*/islandora/object/*"		#Links matching this are texts
+QUERIES = ["text", "mixed%20material"]	#Queries to use in urls to download text
 links = []								#Holds links to text webpages
-bookText = ""							#String to hold book text
 metaDict = {}							#Dictionary to hold meta data
 
+#Check database directory
+if not os.path.isdir(ROOT_DB_DIR):
+	os.makedirs(ROOT_DB_DIR)	#Make directory for db.json
+	os.makedirs(SAVE_BOOKS_DIR)	#Make directory for text files
+
 log = open('log_downloader.txt', 'w')				#Open up a logfile
-db = TinyDB('database/db.json')						#Open database 
-bTable = db.table('Books')							#Table to hold downloaded books information
+db = TinyDB(DB_PATH)			#Open database 
+bTable = db.table('Books')		#Table to hold downloaded books information
 Book = Query()
 
 #Clean database
 if args.clean:
 	db.purge()
 	bTable.purge()
-	fileList = os.listdir(savePath)
+	fileList = os.listdir(SAVE_BOOKS_DIR)
 	for fileName in fileList:
-		os.remove(savePath + fileName)
+		os.remove(SAVE_BOOKS_DIR + fileName)
 
 #Get links	
-for query in queries:								
+for query in QUERIES:								
 	get_urls(query, links)			
-links = fnmatch.filter(links, urlMatch)		#Only keep matched urls
+links = fnmatch.filter(links, URL_MATCH)		#Only keep matched urls
 
 #Download books
 numBooks = len(links)
@@ -140,7 +149,7 @@ print "Downloading books..."
 for link in links:
 	with DelayedKeyboardInterrupt():
 		pbar.update(1)
-		link = baseUrl + link	#Get actual url
+		link = BASE_URL + link	#Get actual url
 		metaDict = {}			#Init dictionary
 		#Check if book has been downloaded already
 		if bTable.search(Book.url == link):
@@ -152,7 +161,7 @@ for link in links:
 		#Set name and 2 dictionary values
 		name = metaDict[consts.TITLE]								#Get name of book
 		date = metaDict[consts.DATE]								#Get date of book
-		metaDict[consts.PATH] = savePath + name + "(" + date +")"	#Set save path for book text
+		metaDict[consts.PATH] = SAVE_BOOKS_DIR + name + "(" + date +")"	#Set save path for book text
 		metaDict[consts.URL] = link									#Set url value
 		#Create text file of book
 		#print metaDict[consts.PATH]
