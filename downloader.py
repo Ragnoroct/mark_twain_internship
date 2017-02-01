@@ -1,26 +1,62 @@
-from bs4 import BeautifulSoup
-from tinydb import TinyDB, Query
+from bs4 import BeautifulSoup			#pip
+from tinydb import TinyDB, Query 		#pip
 import urllib2
-import re
 import fnmatch
 import sys
-import time
+import consts
+import functs
+import os
+from tqdm import tqdm					#pip
+import signal
+import logging
+import argparse							#pip
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--clean', action='store_true', help="Removes all text files and purges Books TABLE in database")
+args = parser.parse_args()
+
+class DelayedKeyboardInterrupt(object):
+    def __enter__(self):
+        self.signal_received = False
+        self.old_handler = signal.getsignal(signal.SIGINT)
+        signal.signal(signal.SIGINT, self.handler)
+
+    def handler(self, sig, frame):
+        self.signal_received = (sig, frame)
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt.')
+
+    def __exit__(self, type, value, traceback):
+        signal.signal(signal.SIGINT, self.old_handler)
+        if self.signal_received:
+            self.old_handler(*self.signal_received)
 
 
-def my_print(text):
-    sys.stdout.write(str(text) + "\n")
-    sys.stdout.flush()
+def my_print(text, newLine=True):
+	"""Flushes stdout and prints the text"""
+	if newLine:
+		sys.stdout.write(str(text) + "\n")
+	else:
+		sys.stdout.write(str(text))
+	sys.stdout.flush()
 #End my_print
-	
-	
-def get_urls(queryStr, linksArray, matcherStr):
+
+def prepare_name(text):
+	text = text.replace('<', '').replace('>', '').replace(':', '').replace('"', '').replace('/', '').replace('\\', '').replace('|', '').replace('?', '').replace('*', '').replace('\0', '').replace('\'', '')
+	text = text[0:100]
+	return text
+
+
+def get_urls(queryStr, linksArray):
 	#Vars
-	pageNum = 0					#Start at first page
-	my_print("\nNew Query for urls")		#Display on newline
-	while (True):			#Start loop
-		#Url to get links from												#Page number												   Query value		
+	pageNum = 0 				#Start at first page
+	functs.clear()
+	printStr = "Querying " + '"' + urllib2.unquote(queryStr) + '"'
+	
+	my_print(printStr)
+	while True:			#Start loop
+		#Url to get links from		
 		urlSearch = "http://twain.lib.niu.edu/islandora/search/%20?page=" + str(pageNum) + "&type=dismax&f[0]=mods_resource_type_ms%3A%22" + queryStr + "%22"
 		my_print("Searching : " + urlSearch)					#Print Searching...
+
 		page = urllib2.urlopen(urlSearch)						#Get page instance
 		soup = BeautifulSoup(page.read())						#Get html page
 		results = soup.find('p', attrs={'class' : 'no-results'})#See if there are results
@@ -30,62 +66,107 @@ def get_urls(queryStr, linksArray, matcherStr):
 		for a in soup.findAll('a', href=True):
 			linksArray.append(a['href'])		#Get their href value
 		pageNum += 1	#Increment page value and loop again
-	linksArray = fnmatch.filter(linksArray, matcherStr)		#Only store matched urls
+	#print
 #End get_urls
 
 
-def download_book(url, baseUrl, number, total, textOut, metaDict):
-	urlSearch = baseUrl + url				#Get actual url
-	my_print("Downloading Book " + str(number) + " of " + str(total) + " : " + urlSearch)	#Print Downloading...
-	page = urllib2.urlopen(urlSearch)							#Get page instance
+def download_book(url, metaDict):
+	text = ""
+	#my_print("Downloading Book " + str(number) + " of " + str(total) + " : " + url)	#Print Downloading...
+	page = urllib2.urlopen(url)			#Get page instance
 	content = page.read()
-	#log.write("\n\nNew html\n")
-	#log.write(content)
-	soup = BeautifulSoup(content)					#Get html page
-	#Get Text
-	for div in soup.find_all('div', attrs={"id":"block-system-main"}):	#Get body of text
-		#log.write(div.text.encode('utf-8'))
-		textOut += div.text.encode('utf-8')
+	soup = BeautifulSoup(content, "html5lib")		#Get html page
+
 	#Get meta
 	divTag = soup.find_all("div", attrs={"class": "niu-artfl"})
 	for tag in divTag:
-		tdTags = tag.find_all("meta")
+		tdTags = tag.find_all("meta", {"content":True, "name":True})
 		for tag in tdTags:
-			metaDict[tag['name'].replace("DC.", "")] = tag['content']
+			name = tag['name'].replace("DC.", "")
+			if name == consts.TITLE:
+				title = prepare_name(tag['content'])
+				metaDict[name] = title
+				#my_print(title)
+			else:	
+				if name in metaDict:
+					metaDict[name] += tag['content']	#Append next value
+				else:
+					metaDict[name] = tag['content']						#Enter first value
+
+	#Get Text
+	for div in soup.find_all('div', attrs={"class":"niu-artfl"}):	#Get body of text
+		#log.write(div.text.encode('utf-8'))
+		text += div.text.encode('utf-8')
+	return text
 #End download_book
 
 #Main Code
 
 #Variables text mixed material
-testBook = "http://twain.lib.niu.edu/islandora/object/niu-twain%3A10949"
+CLEAN = "clean"
+testBook = "/islandora/object/niu-twain%3A10949"
+savePath = "database/books/"
 baseUrl = "http://twain.lib.niu.edu"	#Base url used along with book url	
-urlMatch = "/islandora/object/*"		#Links matching this are texts
+urlMatch = "*/islandora/object/*"		#Links matching this are texts
 queries = ["text", "mixed%20material"]	#Queries to use in urls to download text
 links = []								#Holds links to text webpages
 bookText = ""							#String to hold book text
 metaDict = {}							#Dictionary to hold meta data
 
-log = open('log_downloader.txt', 'w')	#Open up a logfile
-db = TinyDB('database/db.json')
+log = open('log_downloader.txt', 'w')				#Open up a logfile
+db = TinyDB('database/db.json')						#Open database 
+bTable = db.table('Books')							#Table to hold downloaded books information
+Book = Query()
 
-db.insert({'type': 'apple', 'count': 7})
-table = db.table('Books')
+#Clean database
+if args.clean:
+	db.purge()
+	bTable.purge()
+	fileList = os.listdir(savePath)
+	for fileName in fileList:
+		os.remove(savePath + fileName)
 
 #Get links	
-#for query in queries:					#Get every url from each query
-#	get_urls(query, links, urlMatch)
+for query in queries:								
+	get_urls(query, links)			
+links = fnmatch.filter(links, urlMatch)		#Only keep matched urls
 
 #Download books
 numBooks = len(links)
+count = 1
+pbar = tqdm(total=numBooks)
+functs.clear()
+print "Downloading books..."
+for link in links:
+	with DelayedKeyboardInterrupt():
+		pbar.update(1)
+		link = baseUrl + link	#Get actual url
+		metaDict = {}			#Init dictionary
+		#Check if book has been downloaded already
+		if bTable.search(Book.url == link):
+			#pbar.write("Book already downloaded")
+			continue
+		#Get text
+		bookText = download_book(link, metaDict)				#Get text, and meta dictionary information
+		bookText = " ".join(bookText.split())					#Remove extra whitespace
+		#Set name and 2 dictionary values
+		name = metaDict[consts.TITLE]								#Get name of book
+		date = metaDict[consts.DATE]								#Get date of book
+		metaDict[consts.PATH] = savePath + name + "(" + date +")"	#Set save path for book text
+		metaDict[consts.URL] = link									#Set url value
+		#Create text file of book
+		#print metaDict[consts.PATH]
+		with open(metaDict[consts.PATH] + ".txt", "w") as textFile:	#Write text file, title is name of book
+			textFile.write(bookText)		#Write string to file
+		#Write to TinyDB
+		bTable.insert(metaDict)			#Add value to database
+		count += 1						#Increase count
+pbar.close()
 
-text = ""
-download_book(testBook, "", 1, 1, text, metaDict)
+#Sound beep for progress finished
+print "\a"
 
-for i in metaDict:
-    print i, metaDict[i]
-	
-#print("\n".join(links))
-#print(len(links))
-
+#Close files and exit
 log.close()
+db.close()
 sys.exit()
