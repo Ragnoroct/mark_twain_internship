@@ -15,7 +15,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--clean', action='store_true', help="Removes all text files and purges Books TABLE in database")
 args = parser.parse_args()
 
-class DelayedKeyboardInterrupt(object):
+#pylint: disable=w0201,w0622
+class DelayedKeyboardInterrupt(object): 
     def __enter__(self):
         self.signal_received = False
         self.old_handler = signal.getsignal(signal.SIGINT)
@@ -41,7 +42,7 @@ def my_print(text, newLine=True):
 #End my_print
 
 def prepare_name(text):
-	text = text.replace('<', '').replace('>', '').replace(':', '').replace('"', '').replace('/', '').replace('\\', '').replace('|', '').replace('?', '').replace('*', '').replace('\0', '').replace('\'', '').replace('\n','')
+	text = text.replace('<', '').replace('>', '').replace(':', '').replace('"', '').replace('/', '').replace('\\', '').replace('|', '').replace('?', '').replace('*', '').replace('\0', '').replace('\'', '').replace('\n', '')
 	text = text[0:100]
 	return text
 
@@ -101,7 +102,7 @@ def download_book(url, metaDict):
 	return text_bytes
 #End download_book
 
-#Main Code
+#Main Code **************************************
 
 #Variables text mixed material
 CLEAN = "clean"
@@ -118,12 +119,16 @@ QUERIES = ["text", "mixed%20material"]	#Queries to use in urls to download text
 links = []								#Holds links to text webpages
 metaDict = {}							#Dictionary to hold meta data
 
+#Set up logging
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, filename="downloader.log")
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 #Check database directory
 if not os.path.isdir(ROOT_DB_DIR):
 	os.makedirs(ROOT_DB_DIR)	#Make directory for db.json
 	os.makedirs(SAVE_BOOKS_DIR)	#Make directory for text files
 
-log = open('log_downloader.txt', 'w')				#Open up a logfile
 db = TinyDB(DB_PATH)			#Open database 
 bTable = db.table('Books')		#Table to hold downloaded books information
 Book = Query()
@@ -154,11 +159,11 @@ for link in links:
 		metaDict = {}			#Init dictionary
 		#Check if book has been downloaded already
 		if bTable.search(Book.url == link):
-			#pbar.write("Book already downloaded")
+			logger.debug("Book already Downloaded. url=" + link)
 			continue
 		#Get text
 		bookText = download_book(link, metaDict)				#Get text, and meta dictionary information
-		bookText = bookText.decode('utf-8')						#Decode bytes
+		bookText = str(bookText.decode('utf-8'))				#Decode bytes
 		bookText = " ".join(bookText.split())					#Remove extra whitespace
 		#Set name and 2 dictionary values
 		name = metaDict[consts.TITLE]								#Get name of book
@@ -167,7 +172,7 @@ for link in links:
 		metaDict[consts.URL] = link									#Set url value
 		#Create text file of book
 		#print metaDict[consts.PATH]
-		with open(metaDict[consts.PATH] + ".txt", "w",encoding='utf-8') as textFile:	#Write text file, title is name of book
+		with open(metaDict[consts.PATH] + ".txt", "w", encoding='utf-8') as textFile:	#Write text file, title is name of book
 			textFile.write(bookText)		#Write string to file
 		#Write to TinyDB
 		bTable.insert(metaDict)			#Add value to database
@@ -178,6 +183,5 @@ pbar.close()
 print("\a")
 
 #Close files and exit
-log.close()
 db.close()
 sys.exit()
