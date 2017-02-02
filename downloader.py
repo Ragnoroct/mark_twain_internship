@@ -1,3 +1,7 @@
+"""Downloader Python 3.6 Script
+
+Downloads all the text files located on "http://twain.lib.niu.edu"
+"""
 from bs4 import BeautifulSoup			#pip
 from tinydb import TinyDB, Query 		#pip
 import urllib2
