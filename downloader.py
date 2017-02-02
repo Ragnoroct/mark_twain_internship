@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup			#pip
 from tinydb import TinyDB, Query 		#pip
-import urllib2
+import urllib.request
 import fnmatch
 import sys
 import consts
@@ -10,6 +10,7 @@ from tqdm import tqdm					#pip
 import signal
 import logging
 import argparse							#pip
+from classes import Meta
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--clean', action='store_true', help="Removes all text files and purges Books TABLE in database")
 args = parser.parse_args()
@@ -40,7 +41,7 @@ def my_print(text, newLine=True):
 #End my_print
 
 def prepare_name(text):
-	text = text.replace('<', '').replace('>', '').replace(':', '').replace('"', '').replace('/', '').replace('\\', '').replace('|', '').replace('?', '').replace('*', '').replace('\0', '').replace('\'', '')
+	text = text.replace('<', '').replace('>', '').replace(':', '').replace('"', '').replace('/', '').replace('\\', '').replace('|', '').replace('?', '').replace('*', '').replace('\0', '').replace('\'', '').replace('\n','')
 	text = text[0:100]
 	return text
 
@@ -49,7 +50,7 @@ def get_urls(queryStr, linksArray):
 	#Vars
 	pageNum = 0 				#Start at first page
 	functs.clear()
-	printStr = "Querying " + '"' + urllib2.unquote(queryStr) + '"'
+	printStr = "Querying " + '"' + urllib.request.unquote(queryStr) + '"'
 	
 	my_print(printStr)
 	while True:			#Start loop
@@ -57,8 +58,8 @@ def get_urls(queryStr, linksArray):
 		urlSearch = "http://twain.lib.niu.edu/islandora/search/%20?page=" + str(pageNum) + "&type=dismax&f[0]=mods_resource_type_ms%3A%22" + queryStr + "%22"
 		my_print("Searching : " + urlSearch)					#Print Searching...
 
-		page = urllib2.urlopen(urlSearch)						#Get page instance
-		soup = BeautifulSoup(page.read())						#Get html page
+		page = urllib.request.urlopen(urlSearch)				#Get page instance
+		soup = BeautifulSoup(page.read(), "html5lib")			#Get html page
 		results = soup.find('p', attrs={'class' : 'no-results'})#See if there are results
 		if results is not None:		#End of query results
 			break		#End loop
@@ -71,9 +72,9 @@ def get_urls(queryStr, linksArray):
 
 
 def download_book(url, metaDict):
-	text = ""
+	text_bytes = bytes()
 	#my_print("Downloading Book " + str(number) + " of " + str(total) + " : " + url)	#Print Downloading...
-	page = urllib2.urlopen(url)			#Get page instance
+	page = urllib.request.urlopen(url)				#Get page instance
 	content = page.read()
 	soup = BeautifulSoup(content, "html5lib")		#Get html page
 
@@ -96,8 +97,8 @@ def download_book(url, metaDict):
 	#Get Text
 	for div in soup.find_all('div', attrs={"class":"niu-artfl"}):	#Get body of text
 		#log.write(div.text.encode('utf-8'))
-		text += div.text.encode('utf-8')
-	return text
+		text_bytes += div.text.encode('utf-8')
+	return text_bytes
 #End download_book
 
 #Main Code
@@ -145,7 +146,7 @@ numBooks = len(links)
 count = 1
 pbar = tqdm(total=numBooks)
 functs.clear()
-print "Downloading books..."
+print("Downloading books...")
 for link in links:
 	with DelayedKeyboardInterrupt():
 		pbar.update(1)
@@ -157,6 +158,7 @@ for link in links:
 			continue
 		#Get text
 		bookText = download_book(link, metaDict)				#Get text, and meta dictionary information
+		bookText = bookText.decode('utf-8')						#Decode bytes
 		bookText = " ".join(bookText.split())					#Remove extra whitespace
 		#Set name and 2 dictionary values
 		name = metaDict[consts.TITLE]								#Get name of book
@@ -165,7 +167,7 @@ for link in links:
 		metaDict[consts.URL] = link									#Set url value
 		#Create text file of book
 		#print metaDict[consts.PATH]
-		with open(metaDict[consts.PATH] + ".txt", "w") as textFile:	#Write text file, title is name of book
+		with open(metaDict[consts.PATH] + ".txt", "w",encoding='utf-8') as textFile:	#Write text file, title is name of book
 			textFile.write(bookText)		#Write string to file
 		#Write to TinyDB
 		bTable.insert(metaDict)			#Add value to database
@@ -173,7 +175,7 @@ for link in links:
 pbar.close()
 
 #Sound beep for progress finished
-print "\a"
+print("\a")
 
 #Close files and exit
 log.close()
