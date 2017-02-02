@@ -1,0 +1,59 @@
+#Holds python classes used
+
+class Meta(object):
+	def __init__(self):
+                self.UserName = None
+                self.PassWord = None
+
+#pylint: disable=w0612
+class BookMeta(object):
+    """Struct to hold meta data for a Book
+
+    Attributes
+        title       The title of book(string)
+        creator     The writer of book(string)
+        date        Date published(string)
+        publisher   Publisher of book(string)
+        source      Source of book(string)
+        identifier  ID value for book(string)
+        type        Type of file ie. text, image(string)
+        format      Format of text ie. book, article(string)
+        genre       Genre of book(string)
+        period      Period/Era(string)
+        theme       Theme of book(string)
+        gender      Gender of writer(string)
+        path        Path to text file(string)
+        url         Url to book hosted(string)
+        words       Number of words(int)
+        searchBool  If text has been processed(bool)
+        searchType  Type of search ie. strong, weak(string)
+        searchVers  Version of processor used on text(string)
+    Constants
+        STRONG      "strong"
+        MEDIUM      "medium"
+        WEAK        "weak"
+    """
+    def __init__(self):
+        #Variables
+        self.title = None
+        self.creator = None
+        self.date = None
+        self.publisher = None
+        self.source = None
+        self.identifier = None
+        self.type = None
+        self.format = None
+        self.genre = None
+        self.period = None
+        self.theme = None
+        self.gender = None
+        self.path = None
+        self.url = None
+        self.words = None
+        self.searchBool = None
+        self.searchType = None
+        self.searchVers = None
+        #Constants
+        self.STRONG = "strong"
+        self.MEDIUM = "medium"
+        self.WEAK = "weak"
