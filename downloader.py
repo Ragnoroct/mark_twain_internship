@@ -148,26 +148,37 @@ if args.clean:
 		os.remove(SAVE_BOOKS_DIR + fileName)
 
 #Get links	
-for query in QUERIES:								
-	get_urls(query, links)			
-links = fnmatch.filter(links, URL_MATCH)		#Only keep matched urls
+for query in QUERIES:		
+	pass
+	#TESTING: uncomment for release						
+	#get_urls(query, links)			
+#links = fnmatch.filter(links, URL_MATCH)		#Only keep matched urls
+
+#TESTING: Used for testing. DOn't have to load
+links = ['/islandora/object/niu-twain%3A10949', '/islandora/object/niu-lincoln%3A38286', '/islandora/object/niu-twain%3A10977', '/islandora/object/niu-twain%3A10925', '/islandora/object/niu-lincoln%3A38353', '/islandora/object/niu-twain%3A10980', '/islandora/object/niu-twain%3A10916', '/islandora/object/niu-twain%3A10892', '/islandora/object/niu-twain%3A10915', '/islandora/object/niu-twain%3A10946', '/islandora/object/niu-twain%3A10890', '/islandora/object/niu-lincoln%3A37092', '/islandora/object/niu-twain%3A10958', '/islandora/object/niu-lincoln%3A36084', '/islandora/object/niu-twain%3A10994', '/islandora/object/niu-twain%3A10935', '/islandora/object/niu-twain%3A10983', '/islandora/object/niu-twain%3A10969', '/islandora/object/niu-twain%3A10917', '/islandora/object/niu-twain%3A10981', '/islandora/object/niu-twain%3A10941', '/islandora/object/niu-twain%3A10993', '/islandora/object/niu-twain%3A10919', '/islandora/object/niu-lincoln%3A36894', '/islandora/object/niu-twain%3A10956', '/islandora/object/niu-twain%3A10970', '/islandora/object/niu-lincoln%3A37845', '/islandora/object/niu-prairie%3A2078', '/islandora/object/niu-twain%3A10939', '/islandora/object/niu-twain%3A10945', '/islandora/object/niu-lincoln%3A37526', '/islandora/object/niu-twain%3A10905', '/islandora/object/niu-lincoln%3A38174', '/islandora/object/niu-twain%3A10901', '/islandora/object/niu-twain%3A10899', '/islandora/object/niu-gildedage%3A23703', '/islandora/object/niu-gildedage%3A23607', '/islandora/object/niu-twain%3A10913', '/islandora/object/niu-lincoln%3A36750', '/islandora/object/niu-twain%3A10992', '/islandora/object/niu-twain%3A10907', '/islandora/object/niu-lincoln%3A35775', '/islandora/object/niu-twain%3A10961', '/islandora/object/niu-twain%3A10976', '/islandora/object/niu-lincoln%3A37055', '/islandora/object/niu-twain%3A10962', '/islandora/object/niu-twain%3A10891', '/islandora/object/niu-lincoln%3A35428', '/islandora/object/niu-twain%3A10990', '/islandora/object/niu-twain%3A10903', '/islandora/object/niu-lincoln%3A37313', '/islandora/object/niu-twain%3A10940', '/islandora/object/niu-twain%3A10921', '/islandora/object/niu-twain%3A10922', '/islandora/object/niu-twain%3A10910', '/islandora/object/niu-twain%3A10911', '/islandora/object/niu-twain%3A10954', '/islandora/object/niu-lincoln%3A37340', '/islandora/object/niu-lincoln%3A36062', '/islandora/object/niu-twain%3A10936', '/islandora/object/niu-twain%3A10957', '/islandora/object/niu-twain%3A10968', '/islandora/object/niu-twain%3A10948', '/islandora/object/niu-prairie%3A2052', '/islandora/object/niu-twain%3A10929', '/islandora/object/niu-twain%3A10904', '/islandora/object/niu-twain%3A10967', '/islandora/object/niu-twain%3A10934', '/islandora/object/niu-gildedage%3A23615', '/islandora/object/niu-twain%3A10978', '/islandora/object/niu-lincoln%3A35042', '/islandora/object/niu-twain%3A10933', '/islandora/object/niu-gildedage%3A23691', '/islandora/object/niu-twain%3A10966', '/islandora/object/niu-twain%3A10920', '/islandora/object/niu-twain%3A10932', '/islandora/object/niu-twain%3A10972', '/islandora/object/niu-lincoln%3A36329', '/islandora/object/niu-twain%3A10963', '/islandora/object/niu-lincoln%3A37241', '/islandora/object/niu-lincoln%3A37026', '/islandora/object/niu-twain%3A10943', '/islandora/object/niu-twain%3A10928', '/islandora/object/niu-twain%3A10897', '/islandora/object/niu-twain%3A10906', '/islandora/object/niu-lincoln%3A36715', '/islandora/object/niu-twain%3A10986', '/islandora/object/niu-lincoln%3A35784', '/islandora/object/niu-twain%3A10931', '/islandora/object/niu-twain%3A10942', '/islandora/object/niu-twain%3A10926', '/islandora/object/niu-gildedage%3A24418', '/islandora/object/niu-lincoln%3A36933', '/islandora/object/niu-lincoln%3A38372', '/islandora/object/niu-twain%3A10938', '/islandora/object/niu-gildedage%3A24022', '/islandora/object/niu-twain%3A10975', '/islandora/object/niu-lincoln%3A37132', '/islandora/object/niu-twain%3A10974', '/islandora/object/niu-twain%3A10960', '/islandora/object/niu-twain%3A10985', '/islandora/object/niu-twain%3A10996', '/islandora/object/niu-lincoln%3A36500', '/islandora/object/niu-gildedage%3A24226', '/islandora/object/niu-twain%3A10950', '/islandora/object/niu-twain%3A10908', '/islandora/object/niu-twain%3A10959', '/islandora/object/niu-lincoln%3A35380', '/islandora/object/niu-gildedage%3A24170', '/islandora/object/niu-twain%3A10900', '/islandora/object/niu-twain%3A10947', '/islandora/object/niu-twain%3A10909', '/islandora/object/niu-lincoln%3A36083', '/islandora/object/niu-twain%3A10902', '/islandora/object/niu-lincoln%3A37770', '/islandora/object/niu-lincoln%3A37013', '/islandora/object/niu-twain%3A10951', '/islandora/object/niu-lincoln%3A35128', '/islandora/object/niu-twain%3A10989', '/islandora/object/niu-prairie%3A2055', '/islandora/object/niu-twain%3A10973', '/islandora/object/niu-twain%3A10979', '/islandora/object/niu-lincoln%3A37421', '/islandora/object/niu-twain%3A10965', '/islandora/object/niu-twain%3A10895', '/islandora/object/niu-twain%3A10987', '/islandora/object/niu-lincoln%3A35656', '/islandora/object/niu-twain%3A10918', '/islandora/object/niu-lincoln%3A37491', '/islandora/object/niu-twain%3A10923', '/islandora/object/niu-twain%3A10952', '/islandora/object/niu-twain%3A10896', '/islandora/object/niu-twain%3A10937', '/islandora/object/niu-twain%3A10964', '/islandora/object/niu-lincoln%3A37569', '/islandora/object/niu-twain%3A10914', '/islandora/object/niu-lincoln%3A36367', '/islandora/object/niu-twain%3A10912', '/islandora/object/niu-lincoln%3A37061', '/islandora/object/niu-lincoln%3A37131', '/islandora/object/niu-lincoln%3A37854', '/islandora/object/niu-twain%3A10991', '/islandora/object/niu-twain%3A10898', '/islandora/object/niu-lincoln%3A34633', '/islandora/object/niu-lincoln%3A36530', '/islandora/object/niu-twain%3A10894', '/islandora/object/niu-twain%3A10927', '/islandora/object/niu-twain%3A10889', '/islandora/object/niu-lincoln%3A36973', '/islandora/object/niu-twain%3A10984', '/islandora/object/niu-twain%3A10988', '/islandora/object/niu-twain%3A10953', '/islandora/object/niu-lincoln%3A35154', '/islandora/object/niu-twain%3A10982', '/islandora/object/niu-twain%3A10893', '/islandora/object/niu-lincoln%3A36505', '/islandora/object/niu-twain%3A10971', '/islandora/object/niu-twain%3A10955', '/islandora/object/niu-twain%3A10924', '/islandora/object/niu-twain%3A10944', '/islandora/object/niu-twain%3A10995', '/islandora/object/niu-twain%3A10930', '/islandora/object/niu-twain%3A8937', '/islandora/object/niu-lincoln%3A32244', '/islandora/object/niu-lincoln%3A32242', '/islandora/object/niu-twain%3A9466', '/islandora/object/niu-twain%3A10958', '/islandora/object/niu-twain%3A10943', '/islandora/object/niu-twain%3A10950', '/islandora/object/niu-twain%3A10927']
 
 #Download books
 numBooks = len(links)
 count = 1
 pbar = tqdm(total=numBooks)
-functs.clear()
+#functs.clear()
 #print("Downloading books...")
 for link in links:
 	with DelayedKeyboardInterrupt():
-		pbar.update(1)
 		link = BASE_URL + link	#Get actual url
-		#metaDict = {}			#Init dictionary
-		bookMeta = BookMeta()
 		#Check if book has been downloaded already
 		if bTable.search(Book.url == link):
 			logger.info("Book already Downloaded. url=" + link)
+			pbar.update(1)
 			continue
+		#Display progress
+		functs.clear()					#Clear screen
+		print("Downloading " + link)	#Show which book is being downloaded
+		pbar.update(1)					#Update progress bar
+		
+		#metaDict = {}			#Init dictionary
+		bookMeta = BookMeta()
+		
 		#Get text
 		bookText = download_book(link, bookMeta)				#Get text, and meta dictionary information
 		bookText = str(bookText.decode('utf-8'))				#Decode bytes
@@ -176,12 +187,12 @@ for link in links:
 		#Set name and 2 dictionary values
 		name = bookMeta.title if bookMeta.title is not None else ""		#Get title of book
 		date = bookMeta.date if bookMeta.date is not None else ""		#Get date of book
-		logger.info(name + "this is the name")
-		logger.info(date + " this is the date")
+		#logger.info(name + "this is the name")
+		#logger.info(date + " this is the date")
 		bookMeta.path = SAVE_BOOKS_DIR + name + "(" + date +")" + ".txt"	#Set save path for book text
 		bookMeta.url = link													#Set url value
 		#Skip book if it has no title
-		if not name:
+		if name:
 			#Create text file of book
 			#print metaDict[consts.PATH]
 			with open(bookMeta.path, "w", encoding='utf-8') as textFile:		#Write text file, title is name of book
