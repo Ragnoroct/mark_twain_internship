@@ -160,9 +160,10 @@ links = ['/islandora/object/niu-twain%3A10949', '/islandora/object/niu-lincoln%3
 #Download books
 numBooks = len(links)
 count = 1
-pbar = tqdm(total=numBooks)
+pbar = tqdm(total=numBooks, desc="Progress")
 #functs.clear()
 #print("Downloading books...")
+#pylint: disable=c0321
 for link in links:
 	with DelayedKeyboardInterrupt():
 		link = BASE_URL + link	#Get actual url
@@ -180,10 +181,10 @@ for link in links:
 		bookMeta = BookMeta()
 		
 		#Get text
-		bookText = download_book(link, bookMeta)				#Get text, and meta dictionary information
-		bookText = str(bookText.decode('utf-8'))				#Decode bytes
-		bookText = bookText.replace("\n", " ")					#Replace newlines with spaces
-		bookText = " ".join(bookText.split())					#Remove extra whitespace
+		bookText = download_book(link, bookMeta)						#Get text, and meta dictionary information
+		bookText = str(bookText.decode('utf-8'))						#Decode bytes
+		bookText = bookText.replace("\n", " ")							#Replace newlines with spaces
+		bookText = " ".join(bookText.split())							#Remove extra whitespace
 		#Set name and 2 dictionary values
 		name = bookMeta.title if bookMeta.title is not None else ""		#Get title of book
 		date = bookMeta.date if bookMeta.date is not None else ""		#Get date of book
