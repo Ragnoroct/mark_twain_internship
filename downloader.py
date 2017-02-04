@@ -14,7 +14,7 @@ from tqdm import tqdm					#pip
 import signal
 import logging
 import argparse							#pip
-from classes import Meta
+from classes import BookMeta
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--clean', action='store_true', help="Removes all text files and purges Books TABLE in database")
 args = parser.parse_args()
@@ -76,7 +76,7 @@ def get_urls(queryStr, linksArray):
 #End get_urls
 
 
-def download_book(url, metaDict):
+def download_book(url, _bookMeta: BookMeta):
 	text_bytes = bytes()
 	#my_print("Downloading Book " + str(number) + " of " + str(total) + " : " + url)	#Print Downloading...
 	page = urllib.request.urlopen(url)				#Get page instance
@@ -89,16 +89,16 @@ def download_book(url, metaDict):
 		tdTags = tag.find_all("meta", {"content":True, "name":True})
 		for tag in tdTags:
 			name = tag['name'].replace("DC.", "")
-			if name == consts.TITLE:
+			if hasattr(_bookMeta, name):
 				title = prepare_name(tag['content'])
-				metaDict[name] = title
+				setattr(_bookMeta, name, title)
+				#metaDict[name] = title
 				#my_print(title)
 			else:	
-				if name in metaDict:
-					metaDict[name] += tag['content']	#Append next value
+				if getattr(_bookMeta, name) is None:
+					setattr(_bookMeta, name, tag['content'])
 				else:
-					metaDict[name] = tag['content']						#Enter first value
-
+					getattr(_bookMeta, name).append(tag['content'])
 	#Get Text
 	for div in soup.find_all('div', attrs={"class":"niu-artfl"}):	#Get body of text
 		#log.write(div.text.encode('utf-8'))
@@ -124,9 +124,11 @@ links = []								#Holds links to text webpages
 metaDict = {}							#Dictionary to hold meta data
 
 #Set up logging
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, filename="downloader.log")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler("downloader.log", 'w', 'utf-8')
+handler.setFormatter = logging.Formatter('%(levelname)s:%(message)s')
+logger.addHandler(handler)
 
 #Check database directory
 if not os.path.isdir(ROOT_DB_DIR):
@@ -155,31 +157,37 @@ numBooks = len(links)
 count = 1
 pbar = tqdm(total=numBooks)
 functs.clear()
-print("Downloading books...")
+#print("Downloading books...")
 for link in links:
 	with DelayedKeyboardInterrupt():
 		pbar.update(1)
 		link = BASE_URL + link	#Get actual url
-		metaDict = {}			#Init dictionary
+		#metaDict = {}			#Init dictionary
+		bookMeta = BookMeta()
 		#Check if book has been downloaded already
 		if bTable.search(Book.url == link):
-			logger.debug("Book already Downloaded. url=" + link)
+			logger.info("Book already Downloaded. url=" + link)
 			continue
 		#Get text
-		bookText = download_book(link, metaDict)				#Get text, and meta dictionary information
+		bookText = download_book(link, bookMeta)				#Get text, and meta dictionary information
 		bookText = str(bookText.decode('utf-8'))				#Decode bytes
+		bookText = bookText.replace("\n", " ")					#Replace newlines with spaces
 		bookText = " ".join(bookText.split())					#Remove extra whitespace
 		#Set name and 2 dictionary values
-		name = metaDict[consts.TITLE]								#Get name of book
-		date = metaDict[consts.DATE]								#Get date of book
-		metaDict[consts.PATH] = SAVE_BOOKS_DIR + name + "(" + date +")"	#Set save path for book text
-		metaDict[consts.URL] = link									#Set url value
-		#Create text file of book
-		#print metaDict[consts.PATH]
-		with open(metaDict[consts.PATH] + ".txt", "w", encoding='utf-8') as textFile:	#Write text file, title is name of book
-			textFile.write(bookText)		#Write string to file
-		#Write to TinyDB
-		bTable.insert(metaDict)			#Add value to database
+		name = bookMeta.title if bookMeta.title is not None else ""		#Get title of book
+		date = bookMeta.date if bookMeta.date is not None else ""		#Get date of book
+		logger.info(name + "this is the name")
+		logger.info(date + " this is the date")
+		bookMeta.path = SAVE_BOOKS_DIR + name + "(" + date +")" + ".txt"	#Set save path for book text
+		bookMeta.url = link													#Set url value
+		#Skip book if it has no title
+		if not name:
+			#Create text file of book
+			#print metaDict[consts.PATH]
+			with open(bookMeta.path, "w", encoding='utf-8') as textFile:		#Write text file, title is name of book
+				textFile.write(bookText)		#Write string to file
+			#Write to TinyDB
+			bTable.insert(bookMeta.__dict__)			#Add value to database
 		count += 1						#Increase count
 pbar.close()
 
