@@ -26,13 +26,7 @@ class BookMeta(object):
         path        Path to text file(string)
         url         Url to book hosted(string)
         words       Number of words(int)
-        searchBool  If text has been processed(bool)
-        searchType  Type of search ie. strong, weak(string)
-        searchVers  Version of processor used on text(string)
-    Constants
-        STRONG      "strong"
-        MEDIUM      "medium"
-        WEAK        "weak"
+        searchStrengh   The strength of the search. 0 = No search.
     """
     def __init__(self, aDict=None):
         #Variables
@@ -51,13 +45,8 @@ class BookMeta(object):
         self.path = None
         self.url = None
         self.words = None
-        self.searchBool = None
-        self.searchType = None
-        self.searchVers = None
-        #Constants
-        self.STRONG = 3
-        self.MEDIUM = 2
-        self.WEAK = 1
+        self.searchStrengh = 0
+
         if aDict is not None:
             for k in aDict:
                 if hasattr(self, k):
