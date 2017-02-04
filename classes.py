@@ -1,9 +1,10 @@
 #Holds python classes used
 
-class Meta(object):
-	def __init__(self):
-                self.UserName = None
-                self.PassWord = None
+class TextBlock(object):
+    def __init__(self):
+        self.text = None
+        self.date_range = None
+
 
 #pylint: disable=w0612
 class BookMeta(object):
@@ -33,7 +34,7 @@ class BookMeta(object):
         MEDIUM      "medium"
         WEAK        "weak"
     """
-    def __init__(self):
+    def __init__(self, aDict=None):
         #Variables
         self.title = None
         self.creator = None
@@ -54,6 +55,29 @@ class BookMeta(object):
         self.searchType = None
         self.searchVers = None
         #Constants
-        self.STRONG = "strong"
-        self.MEDIUM = "medium"
-        self.WEAK = "weak"
+        self.STRONG = 3
+        self.MEDIUM = 2
+        self.WEAK = 1
+        if aDict is not None:
+            for k in aDict:
+                if hasattr(self, k):
+                    setattr(self, k, aDict[k])
+
+class Struct(object):
+    def __init__(self, adict):
+        """Convert a dictionary to a class
+
+        @param :adict Dictionary
+        """
+        self.__dict__.update(adict)
+        for k, v in adict.items():
+            if isinstance(v, dict):
+                self.__dict__[k] = Struct(v)
+
+def get_object(adict):
+    """Convert a dictionary to a class
+
+    @param :adict Dictionary
+    @return :class:Struct
+    """
+    return Struct(adict)
