@@ -1,9 +1,11 @@
 #Holds python classes used
 
-class Meta(object):
-	def __init__(self):
-                self.UserName = None
-                self.PassWord = None
+class TextBlock(object):
+    def __init__(self):
+        self.meta_id = None
+        self.text = None
+        self.date_range = None
+
 
 #pylint: disable=w0612
 class BookMeta(object):
@@ -25,15 +27,9 @@ class BookMeta(object):
         path        Path to text file(string)
         url         Url to book hosted(string)
         words       Number of words(int)
-        searchBool  If text has been processed(bool)
-        searchType  Type of search ie. strong, weak(string)
-        searchVers  Version of processor used on text(string)
-    Constants
-        STRONG      "strong"
-        MEDIUM      "medium"
-        WEAK        "weak"
+        searchStrengh   The strength of the search. 0 = No search.
     """
-    def __init__(self):
+    def __init__(self, aDict=None):
         #Variables
         self.title = None
         self.creator = None
@@ -50,10 +46,28 @@ class BookMeta(object):
         self.path = None
         self.url = None
         self.words = None
-        self.searchBool = None
-        self.searchType = None
-        self.searchVers = None
-        #Constants
-        self.STRONG = "strong"
-        self.MEDIUM = "medium"
-        self.WEAK = "weak"
+        self.searchStrengh = 0
+
+        if aDict is not None:
+            for k in aDict:
+                if hasattr(self, k):
+                    setattr(self, k, aDict[k])
+
+class Struct(object):
+    def __init__(self, adict):
+        """Convert a dictionary to a class
+
+        @param :adict Dictionary
+        """
+        self.__dict__.update(adict)
+        for k, v in adict.items():
+            if isinstance(v, dict):
+                self.__dict__[k] = Struct(v)
+
+def get_object(adict):
+    """Convert a dictionary to a class
+
+    @param :adict Dictionary
+    @return :class:Struct
+    """
+    return Struct(adict)
