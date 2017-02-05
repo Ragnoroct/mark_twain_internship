@@ -2,6 +2,7 @@
 
 class TextBlock(object):
     def __init__(self):
+        self.meta_id = None
         self.text = None
         self.date_range = None
 
