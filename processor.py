@@ -12,7 +12,8 @@ import logging
 import re
 import math
 import csv
-import textwrap
+from tqdm import tqdm 
+import functs
 
 #Processing functions START here. *******************************************************************
 
@@ -24,7 +25,7 @@ def loadText(_path):
     return _text
 #End loadText
 
-def searchRange(_stringList, id):
+def searchRange(_stringList):
     """Searches string list for the date range of the text
         @param  _stringList (list) List of words of text
         @return _range      (list) The approx. range of the date written
@@ -33,7 +34,6 @@ def searchRange(_stringList, id):
     _DATE_RANGE = [1861, 1900]
     _dates = fnmatch.filter(_stringList, _DATE_RE)        #Find all dates
     _dateList = []
-    print("id is *********", id, "******************")
     for d in _dates:
         _num = int(re.sub("[^0-9]", "", d))
         #print("test print", _testList)
@@ -57,79 +57,86 @@ def searchRange(_stringList, id):
         return [r1, r2]         #Return range
 #End searchRange
 
-def findIndex(string, list):
-	MAX = 100
-	WIDTH = 80
-	city = ""
-	loc = 0
-	#Prints location of places
-	strLen = len(string)
-	
-	for row in list:
-		city = row[0]
-		loc = string.find(city)
-		if loc != -1:
-			#get start
-			counter = 0
-			index = 2
-			while(counter < MAX and loc - index != -1):
-				if(string[loc - index] == " "):
-					counter += 1
-				index += 1
-				#print("counter : ", counter, "Max : ", MAX)
-			start = loc - index
-			#get end
-			counter = 0
-			index = len(city) + 2
-			while(counter < MAX and loc + index != strLen):
-				if(string[loc + index] == " "):
-					counter += 1
-				index += 1
-				#print("counter : ", counter, "Max : ", MAX)
-			end = loc + index
-			#print("100 words from ", end, " to ", loc)
-			text1 = ' '.join(string[start + 2:loc].split())
-			lines1 = textwrap.wrap(text1, WIDTH)
-			text2 = "*[" + string[loc: loc + len(city)] + "]*" 
-			text3 = ' '.join(string[loc + len(city): end].split())
-			lines3 = textwrap.wrap(text3, WIDTH)
-			
-			output = ""
-			lineCount = 0
-			for line in lines1:			#Add first 100 words
-				lineCount += 1
-				output += line + "\n"
-			output = output[:-1]		#Subtract last \n
-			output += " "				#Replace with space
-			output += text2				#Add city mention
-			for line in lines3:			#Add last 100 words
-				lineCount += 1
-				output += line + "\n"
-			print("\n Block :")
-			print(output)
-		#print("matched at : ", string.find(city))
+def getBlocks(_string, _list):
+    """Gets all text blocks in book
+        @param    
+    """
+    _MAX = consts.SURROUND_WORD_COUNT / 2        #Number words to find on each side of city location in text
+    _strLen = len(_string)                        #Get length of string
+
+    _result = []
+    
+    for row in _list:
+        _city = row[0]                #Get city name
+        _loc = _string.find(_city)        #Get index of city mention
+        #If mention is found
+        if _loc != -1:
+            #get start location
+            counter = 0
+            index = 2
+            while counter < _MAX and _loc - index != -1:
+                if _string[_loc - index] == " ":
+                    counter += 1
+                index += 1
+                #print("counter : ", counter, "Max : ", MAX)
+            start = _loc - index
+            #################
+            #get end location
+            counter = 0
+            index = len(_city) + 2
+            while counter < _MAX and _loc + index != _strLen:
+                if _string[_loc + index] == " ":
+                    counter += 1
+                index += 1
+            end = _loc + index
+            #################
+
+            #Get text divided up
+            text1 = ' '.join(_string[start + 2:_loc].split())                #Get first 100 words
+            text2 = _city                                                    #Get city name
+            text3 = ' '.join(_string[_loc + len(_city): end].split())        #Get last 100 words
+
+            _result.append([text1, text2, text3])
+        #End if
+    #End for
+    return _result
 #End index
 
 #Processing functions END here. **********************************************************************
 
 def processBook(_bookMeta: BookMeta, _id):
-    _block = TextBlock()                #Text block instance
-    _text = loadText(_bookMeta.path)    #Get text
-    _words = _text.split()              #Get list of words
-    findIndex(_text, cities_51)
-    #_range = searchRange(_words, _id)        #(list(int))Search for the date range
+    _text = loadText(_bookMeta.path)            #Get text
+    _words = _text.split()                      #Get list of words
+    _blocks51 = getBlocks(_text, cities_51)     #Get mentions of 1851 cities
+    _blocks78 = getBlocks(_text, cities_78)     #Get mentions of 1878 cities
+    _range = searchRange(_words)                #Get date range of text
 
-    #Set TextBlock values
-    _block.meta_id = _id                #Set id pointer to meta book table
-    #_block.date_range = _range          #Set textblock date range
+    #Create all text blocks for 1851 cities
+    for l in _blocks51:
+        _block = TextBlock()        #New block
+        _block.book_id = _id        #Set id
+        _block.date_range = _range  #Set range
+        _block.fText = l[0]     #Set first 100 words
+        _block.cText = l[1]     #Set city text
+        _block.lText = l[2]     #Set last 100 words
+        _block.map_date = "1851"#Set map date
+        updateDB(_block)        #Insert into db
 
-    #Send textblock to the database
-    updateDB(_bookMeta, _block)
+    #Create all text blocks for 1878 cities
+    for l in _blocks51:
+        _block = TextBlock()        #New block
+        _block.book_id = _id        #Set id
+        _block.date_range = _range  #Set range
+        _block.fText = l[0]     #Set first 100 words
+        _block.cText = l[1]     #Set city text
+        _block.lText = l[2]     #Set last 100 words
+        _block.map_date = "1851"#Set map date
+        updateDB(_block)        #Insert into db        
+
 #End processBook
 
-def updateDB(_bookMeta: BookMeta, _block: TextBlock):
-    if not tBlocks.search(blockQ.meta_id == _block.meta_id):
-        tBlocks.insert(_block.__dict__)  
+def updateDB(_block: TextBlock):
+    tBlocks.insert(_block.__dict__)  
 
 #Main: ****************************************************************
 #Variables
@@ -151,31 +158,38 @@ db = TinyDB(consts.DB_PATH)                 #Open database
 tBooks = db.table(consts.TABLE_BOOKS)       #Open book table
 tBlocks = db.table(consts.TABLE_BLOCKS)     #Open block table
 tBlocks.purge()                             #Purge Text Blocks table
+input("...")
 blockQ = Query()
 
 #Load both cvs files
 #First one 1851
 i = 0
 with open(consts.CSV_1, newline='') as csvfile:
-	reader = csv.reader(csvfile, dialect='excel')
-	for row in reader:
-		if i != 0:
-			cities_51.append(row)
-		i += 1
+    reader = csv.reader(csvfile, dialect='excel')
+    for row in reader:
+        if i != 0:
+            cities_51.append(row)
+        i += 1
 #First second 1878
 i = 0
 with open(consts.CSV_2, newline='') as csvfile:
-	reader = csv.reader(csvfile, dialect='excel')
-	for row in reader:
-		if i != 0:
-			cities_78.append(row)
-		i += 1
+    reader = csv.reader(csvfile, dialect='excel')
+    for row in reader:
+        if i != 0:
+            cities_78.append(row)
+        i += 1
 
 #Search all texts
 bookList = tBooks.all()         #Get list of every object in database
+pbar = tqdm(total=len(bookList), desc="Progress")
 for bookDict in bookList:       #Loop through each bookmeta object
     eid = bookDict.eid          #Get id from       
-    book = BookMeta(bookDict)    #Convert dictionary to BookMeta
-    processBook(book, eid)       #Processes book
+    book = BookMeta(bookDict)   #Convert dictionary to BookMeta
+    functs.clear()              #Clear screen
+    data = str(book.title)      #Title of book
+    info = (data[:20] + '...') if len(data) > 23 else data
+    print("Searching -", info)  #Show which book is being searched
+    pbar.update(1)              #Update progress bar
+    processBook(book, eid)      #Processes book
 
-
+print("Produced blocks:", len(tBlocks.all()))
