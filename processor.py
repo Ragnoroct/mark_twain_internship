@@ -94,7 +94,7 @@ def getBlocks(_string, _list):
             #Get text divided up
             text1 = ' '.join(_string[start + 2:_loc].split())                #Get first 100 words
             text2 = _city                                                    #Get city name
-            text3 = ' '.join(_string[_loc + len(_city): end].split())        #Get last 100 words
+            text3 = ' '.join(_string[_loc + len(_city) + 1: end].split())        #Get last 100 words
 
             _result.append([text1, text2, text3])
         #End if
@@ -158,7 +158,6 @@ db = TinyDB(consts.DB_PATH)                 #Open database
 tBooks = db.table(consts.TABLE_BOOKS)       #Open book table
 tBlocks = db.table(consts.TABLE_BLOCKS)     #Open block table
 tBlocks.purge()                             #Purge Text Blocks table
-input("...")
 blockQ = Query()
 
 #Load both cvs files
