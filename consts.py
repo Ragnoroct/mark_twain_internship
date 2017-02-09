@@ -9,6 +9,9 @@ DB_PATH = ROOT_DB_DIR + _DB_NAME
 TABLE_BOOKS = "Books"
 TABLE_BLOCKS = "Blocks"
 
+CSV_1 = "cities_1851.csv"
+CSV_2 = "cities_1878.csv"
+
 
 TITLE = "title"
 CREATOR = "creator"

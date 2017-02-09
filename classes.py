@@ -1,10 +1,14 @@
 #Holds python classes used
 
 class TextBlock(object):
-    def __init__(self):
+    def __init__(self, aDict=None):
         self.meta_id = None
         self.text = None
         self.date_range = None
+		if aDict is not None:
+            for k in aDict:
+                if hasattr(self, k):
+                    setattr(self, k, aDict[k])
 
 
 #pylint: disable=w0612
