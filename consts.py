@@ -12,6 +12,8 @@ TABLE_BLOCKS = "Blocks"
 CSV_1 = "cities_1851.csv"
 CSV_2 = "cities_1878.csv"
 
+SURROUND_WORD_COUNT = 200
+
 
 TITLE = "title"
 CREATOR = "creator"
@@ -27,4 +29,3 @@ THEME = "theme"
 GENDER = "gender"
 PATH = "path"
 URL = "url"
-
